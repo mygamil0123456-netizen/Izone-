@@ -1,106 +1,145 @@
 import { motion } from "motion/react";
-import { ArrowRight, Zap, Shield, Truck, RotateCcw, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowRight, Zap, Shield, Truck, RotateCcw, Smartphone, Watch, Book, Shirt, Headphones, Tv, Search } from "lucide-react";
 import Button from "../components/Button";
-import ProductCard, { ProductProps } from "../components/ProductCard";
-import { Link } from "react-router-dom";
+import ProductCard from "../components/ProductCard";
+import { Link, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-
 import { PRODUCTS } from "../data/products";
+import { cn } from "../lib/utils";
+
+const SectorCard = ({ sector, icon: Icon, brands, isBrandLink }: any) => {
+  return (
+    <div className="space-y-6">
+      <Link to={`/category/${sector.id}`} className="block">
+        <motion.div 
+          whileHover={{ y: -10, scale: 1.02 }}
+          className="relative group h-64 rounded-[2.5rem] overflow-hidden glass border border-white/5 bg-white/5 backdrop-blur-2xl"
+        >
+          <img src={sector.img} alt={sector.name} className="w-full h-full object-cover opacity-40 group-hover:opacity-80 transition-all duration-700 aspect-video" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+          <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center">
+            <div className="w-16 h-16 bg-orange-500/10 rounded-3xl flex items-center justify-center text-orange-500 mb-4 group-hover:bg-orange-500 group-hover:text-black transition-all duration-500">
+              <Icon size={32} />
+            </div>
+            <h3 className="text-2xl font-black uppercase tracking-tighter italic text-white group-hover:text-orange-500 transition-colors drop-shadow-2xl">{sector.name} Sector</h3>
+          </div>
+        </motion.div>
+      </Link>
+
+      {brands && (
+        <div className="flex flex-wrap gap-2 justify-center">
+          {brands.map((brand: any) => (
+            <Link 
+              key={brand.name} 
+              to={isBrandLink ? `/shop?q=${brand.name}` : `/category/${sector.id}?q=${brand.name}`}
+              className="px-4 py-2 bg-white/5 border border-white/5 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] text-white/40 hover:border-orange-500/50 hover:text-orange-500 hover:bg-orange-500/5 transition-all"
+            >
+              {brand.name}
+            </Link>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
 
 const HomePage = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [searchQuery, setSearchQuery] = useState("");
+  const navigate = useNavigate();
 
-  const heroSlides = [
-    {
-      title: "Realme C55 Launch",
-      subtitle: "Champion Edition Available",
-      image: "https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?auto=format&fit=crop&q=80&w=1200",
-      color: "from-yellow-500/20"
+  const sectors = [
+    { 
+      id: "mobile-phones", 
+      name: "Mobile", 
+      img: "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&q=80&w=600",
+      icon: Smartphone,
+      brands: [
+        { name: "Samsung" }, { name: "Tecno" }, { name: "Infinix" }, 
+        { name: "Redmi" }, { name: "Realme" }, { name: "OnePlus" }
+      ],
+      isBrandLink: true
     },
-    {
-      title: "Ultra Series Smart Watches",
-      subtitle: "The Future on Your Wrist",
-      image: "https://images.unsplash.com/photo-1544117518-30df267afd94?auto=format&fit=crop&q=80&w=1200",
-      color: "from-orange-500/20"
+    { 
+      id: "smart-watch", 
+      name: "Smart Watch", 
+      img: "https://images.unsplash.com/photo-1544117518-30df267afd94?auto=format&fit=crop&q=80&w=600",
+      icon: Watch,
+      brands: [
+        { name: "Apple" }, { name: "Samsung" }, { name: "Xiaomi" }, 
+        { name: "Haylou" }, { name: "Noise" }
+      ]
     },
-    {
-      title: "Next-Gen Gaming Audio",
-      subtitle: "Absolute Immersion",
-      image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&q=80&w=1200",
-      color: "from-blue-500/20"
-    }
+    { 
+      id: "books", 
+      name: "Book", 
+      img: "https://images.unsplash.com/photo-1497633762265-9a177c8098a2?auto=format&fit=crop&q=80&w=600",
+      icon: Book,
+      brands: [
+        { name: "Panjeree" }, { name: "Lecture" }, { name: "Student" }, 
+        { name: "Suggestions" }
+      ]
+    },
+    { 
+      id: "fashion", 
+      name: "Fashion", 
+      img: "https://images.unsplash.com/photo-1621236300238-c25f1c47d286?auto=format&fit=crop&q=80&w=600",
+      icon: Shirt,
+      brands: [
+        { name: "Rare" }, { name: "Hoodie" }, { name: "Oversized" }, { name: "Korean" }
+      ]
+    },
+    { 
+      id: "headphones", 
+      name: "Accessories", 
+      img: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&q=80&w=600",
+      icon: Headphones 
+    },
+    { 
+      id: "tv", 
+      name: "TV", 
+      img: "https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?auto=format&fit=crop&q=80&w=600",
+      icon: Tv 
+    },
   ];
 
-  const trendingProducts = PRODUCTS.slice(0, 4);
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % heroSlides.length);
-    }, 5000);
-    return () => clearInterval(timer);
-  }, []);
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/shop?q=${encodeURIComponent(searchQuery)}`);
+    }
+  };
 
   return (
     <div className="space-y-32 pb-32">
-      {/* Hero Section */}
-      <section className="relative h-[90vh] overflow-hidden">
-        {heroSlides.map((slide, index) => (
-          <motion.div
-            key={index}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: currentSlide === index ? 1 : 0 }}
-            transition={{ duration: 1 }}
-            className={`absolute inset-0 bg-gradient-to-r ${slide.color} to-transparent flex items-center`}
+      {/* Premium Hero Section */}
+      <section className="relative pt-20 pb-40 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-b from-orange-500/10 to-transparent" />
+        <div className="max-w-7xl mx-auto px-4 md:px-8 relative z-10 text-center space-y-12">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-4"
           >
-            <div className="absolute inset-0">
-              <img src={slide.image} alt={slide.title} className="w-full h-full object-cover opacity-40" />
-              <div className="absolute inset-0 bg-black/40" />
-            </div>
-            <div className="relative max-w-7xl mx-auto px-4 md:px-8 w-full">
-              <div className="max-w-2xl space-y-8">
-                <motion.div
-                  initial={{ y: 50, opacity: 0 }}
-                  animate={currentSlide === index ? { y: 0, opacity: 1 } : { y: 50, opacity: 0 }}
-                  transition={{ delay: 0.5 }}
-                >
-                  <p className="text-orange-500 font-bold uppercase tracking-[0.3em] mb-4">{slide.subtitle}</p>
-                  <h1 className="text-6xl md:text-8xl font-black tracking-tighter leading-none uppercase">
-                    {slide.title.split(' ').map((word, i) => (
-                      <span key={i} className="block">{word}</span>
-                    ))}
-                  </h1>
-                </motion.div>
-                <motion.div
-                  initial={{ y: 30, opacity: 0 }}
-                  animate={currentSlide === index ? { y: 0, opacity: 1 } : { y: 30, opacity: 0 }}
-                  transition={{ delay: 0.8 }}
-                  className="flex gap-4"
-                >
-                  <Link to="/shop">
-                    <Button size="lg" className="group">
-                      Shop Collection <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                    </Button>
-                  </Link>
-                  <Button variant="outline" size="lg">Explore Tech</Button>
-                </motion.div>
-              </div>
-            </div>
+            <h1 className="text-7xl md:text-[10rem] font-black uppercase tracking-tighter italic leading-[0.8] mb-4">
+              I <span className="text-orange-500 drop-shadow-[0_0_30px_rgba(249,115,22,0.4)]">zone</span>
+            </h1>
+            <p className="text-white/40 uppercase font-black tracking-[0.5em] text-sm">Bangladesh's Premium E-Commerce Blueprint</p>
           </motion.div>
-        ))}
-        {/* Slide Controls */}
-        <div className="absolute bottom-12 right-12 flex gap-4 z-10">
-          <button 
-            onClick={() => setCurrentSlide((prev) => (prev - 1 + heroSlides.length) % heroSlides.length)}
-            className="w-12 h-12 border border-white/20 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors"
-          >
-            <ChevronLeft />
-          </button>
-          <button 
-            onClick={() => setCurrentSlide((prev) => (prev + 1) % heroSlides.length)}
-            className="w-12 h-12 border border-white/20 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors"
-          >
-            <ChevronRight />
-          </button>
+
+          <form onSubmit={handleSearch} className="max-w-3xl mx-auto relative group">
+            <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-6 h-6 text-white/20 group-focus-within:text-orange-500 transition-colors" />
+            <input 
+              type="text" 
+              placeholder="Search for Phones, Watches, Books or Fashion..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full bg-white/5 border border-white/10 rounded-[2rem] py-6 pl-16 pr-8 text-lg outline-none focus:border-orange-500 backdrop-blur-3xl transition-all"
+            />
+            <button type="submit" className="absolute right-3 top-1/2 -translate-y-1/2 bg-orange-500 text-black font-black px-8 py-3 rounded-2xl hover:bg-orange-400 transition-colors uppercase tracking-widest text-xs">
+              Search
+            </button>
+          </form>
         </div>
       </section>
 
@@ -124,50 +163,83 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* Categories Grid */}
+      {/* New Sectors Grid */}
       <section className="max-w-7xl mx-auto px-4 md:px-8">
-        <div className="flex justify-between items-end mb-12">
-          <div className="space-y-4">
-            <h2 className="text-5xl font-black tracking-tighter uppercase leading-none">Categories</h2>
-            <div className="h-1 w-20 bg-orange-500" />
-          </div>
-          <Link to="/shop" className="text-sm font-bold uppercase tracking-widest text-white/40 hover:text-white transition-colors">See All Classes</Link>
+        <div className="text-center space-y-4 mb-20">
+          <p className="text-orange-500 font-bold uppercase tracking-[0.3em] text-[10px]">Premium Exploration</p>
+          <h2 className="text-5xl md:text-7xl font-black tracking-tighter uppercase leading-none italic">Product <span className="text-orange-500">Sectors</span></h2>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {[
-            { name: "Smart Watches", img: "https://images.unsplash.com/photo-1544117518-30df267afd94?auto=format&fit=crop&q=80&w=600", cols: "md:col-span-2" },
-            { name: "Laptops", img: "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?auto=format&fit=crop&q=80&w=600", cols: "" },
-            { name: "Audio", img: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&q=80&w=600", cols: "" },
-            { name: "Mobiles", img: "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&q=80&w=600", cols: "md:col-span-2" },
-          ].map((cat, i) => (
-            <Link key={i} to={`/category/${cat.name.toLowerCase().replace(' ', '-')}`} className={cn("relative group h-80 rounded-3xl overflow-hidden", cat.cols)}>
-              <img src={cat.img} alt={cat.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-              <div className="absolute bottom-8 left-8">
-                <h3 className="text-2xl font-black uppercase tracking-tighter group-hover:text-orange-500 transition-colors">{cat.name}</h3>
-                <p className="text-white/50 text-xs uppercase tracking-widest mt-1">Explore Collection</p>
-              </div>
-            </Link>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12">
+          {sectors.map((sector, i) => (
+            <SectorCard key={i} sector={sector} icon={sector.icon} brands={sector.brands} isBrandLink={sector.isBrandLink} />
           ))}
         </div>
       </section>
 
-      {/* Trending Products */}
+      {/* Trending Now */}
       <section className="max-w-7xl mx-auto px-4 md:px-8">
         <div className="flex justify-between items-end mb-12">
           <div className="space-y-4">
-            <h2 className="text-5xl font-black tracking-tighter uppercase leading-none">Trending Now</h2>
+            <h2 className="text-5xl font-black tracking-tighter uppercase leading-none italic">Trending <span className="text-orange-500">Now</span></h2>
             <div className="h-1 w-20 bg-orange-500" />
           </div>
-          <div className="flex gap-2">
-            <button className="p-2 border border-white/10 rounded-full hover:bg-white/5"><ChevronLeft className="w-5 h-5" /></button>
-            <button className="p-2 border border-white/10 rounded-full hover:bg-white/5"><ChevronRight className="w-5 h-5" /></button>
-          </div>
+          <Link to="/shop" className="text-sm font-bold uppercase tracking-widest text-white/40 hover:text-white transition-colors">View All</Link>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-          {trendingProducts.map((p) => (
+          {PRODUCTS.filter(p => p.rating >= 4.9).slice(0, 4).map((p) => (
             <ProductCard key={p.id} product={p} />
           ))}
+        </div>
+      </section>
+
+      {/* Smart Watch Collection */}
+      <section className="max-w-7xl mx-auto px-4 md:px-8">
+        <div className="flex justify-between items-end mb-12">
+          <div className="space-y-4 text-left">
+            <p className="text-orange-500 font-bold uppercase tracking-[0.3em] text-[10px]">Elite Wearables</p>
+            <h2 className="text-4xl md:text-5xl font-black tracking-tighter uppercase leading-none italic">Smart Watch Collection</h2>
+          </div>
+          <Link to="/category/smart-watch" className="text-sm font-bold uppercase tracking-widest text-white/40 hover:text-white transition-colors">See Collection</Link>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+          {PRODUCTS.filter(p => p.category === 'smart-watch').slice(0, 4).map((p) => (
+            <ProductCard key={p.id} product={p} />
+          ))}
+        </div>
+      </section>
+
+      {/* Customer Reviews */}
+      <section className="max-w-7xl mx-auto px-4 md:px-8">
+        <div className="text-center space-y-4 mb-20">
+          <p className="text-orange-500 font-bold uppercase tracking-[0.3em] text-[10px]">What they say</p>
+          <h2 className="text-5xl font-black tracking-tighter uppercase leading-none italic text-orange-500">Customer Reviews</h2>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+           {[
+             { name: "Rafiqul Islam", review: "The service is outstanding. Got my watch within 24 hours in Dhaka!", rating: 5 },
+             { name: "Tahmina Akter", review: "Impressive collection of anime t-shirts. The quality is top-notch.", rating: 5 },
+             { name: "Sajid Ahmed", review: "Secure payment and fast delivery. Highly recommended for premium gadgets.", rating: 4 },
+           ].map((rev, i) => (
+             <motion.div 
+               key={i} 
+               whileHover={{ y: -10 }}
+               className="p-8 bg-white/5 rounded-[2.5rem] border border-white/5 space-y-4 shadow-2xl backdrop-blur-xl"
+             >
+                <div className="flex gap-1">
+                  {[...Array(5)].map((_, j) => (
+                    <Zap key={j} className={`w-3 h-3 ${j < rev.rating ? 'text-orange-500 fill-orange-500' : 'text-white/10'}`} />
+                  ))}
+                </div>
+                <p className="text-base font-black uppercase tracking-tighter text-white italic mb-4">"{rev.review}"</p>
+                <div className="flex items-center gap-3 pt-6 border-t border-white/5">
+                   <div className="w-12 h-12 bg-orange-500 rounded-2xl flex items-center justify-center font-black text-black text-lg">{rev.name[0]}</div>
+                   <div>
+                      <p className="text-xs font-black uppercase tracking-widest text-white">{rev.name}</p>
+                      <p className="text-[10px] uppercase font-bold text-white/20 tracking-widest mt-0.5">Verified Buyer</p>
+                   </div>
+                </div>
+             </motion.div>
+           ))}
         </div>
       </section>
 
@@ -176,36 +248,24 @@ const HomePage = () => {
         <motion.div 
           initial={{ opacity: 0, scale: 0.95 }}
           whileInView={{ opacity: 1, scale: 1 }}
-          className="relative h-[400px] rounded-[3rem] overflow-hidden bg-orange-500 flex items-center"
+          className="relative h-[450px] rounded-[3.5rem] overflow-hidden bg-orange-500 flex items-center"
         >
           <div className="absolute inset-0 overflow-hidden">
              <div className="absolute top-0 right-0 w-1/2 h-full bg-black/10 skew-x-12 translate-x-1/2" />
              <div className="absolute bottom-0 left-0 w-1/4 h-1/4 bg-white/10 rounded-full blur-3xl" />
           </div>
-          <div className="relative z-10 px-12 md:px-24 space-y-6">
-            <span className="text-black font-black text-xs uppercase tracking-[0.4em]">Limited Time Offer</span>
-            <h2 className="text-black text-6xl md:text-8xl font-black tracking-tighter uppercase leading-[0.8]">Flash Sale<br/>Event</h2>
-            <p className="text-black/60 max-w-sm font-medium uppercase text-sm">Up to 60% off on all accessories. Only for the next 24 hours.</p>
-            <Button variant="secondary" size="lg">Grab Deals</Button>
+          <div className="relative z-10 px-12 md:px-24 space-y-8">
+            <span className="text-black font-black text-xs uppercase tracking-[0.4em] bg-black/5 px-4 py-2 rounded-full">Limited Time Offer</span>
+            <h2 className="text-black text-7xl md:text-[9rem] font-black tracking-tighter uppercase leading-[0.75] italic">Flash Sale<br/>Event</h2>
+            <p className="text-black/60 max-w-sm font-black uppercase text-xs tracking-widest">Up to 60% off on all accessories. Only for the next 24 hours.</p>
+            <div className="pt-4">
+               <Button className="bg-black text-orange-500 hover:bg-black/90 px-10 py-5 text-base" size="lg">Grab Deals Now</Button>
+            </div>
           </div>
         </motion.div>
-      </section>
-
-      {/* Brand Partners */}
-      <section className="max-w-7xl mx-auto px-4 md:px-8 py-20 text-center space-y-12 border-t border-white/5">
-        <p className="text-white/20 text-xs uppercase font-black tracking-[0.5em]">Trust Partners</p>
-        <div className="flex flex-wrap justify-center items-center gap-16 grayscale opacity-30 hover:grayscale-0 hover:opacity-100 transition-all duration-700">
-           {['Apple', 'Samsung', 'Sony', 'Xiaomi', 'Logitech', 'Asus'].map(brand => (
-             <span key={brand} className="text-3xl font-black italic tracking-tighter">{brand}</span>
-           ))}
-        </div>
       </section>
     </div>
   );
 };
 
 export default HomePage;
-
-function cn(...inputs: any[]) {
-  return inputs.filter(Boolean).join(' ');
-}

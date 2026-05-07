@@ -25,9 +25,9 @@ const AddProduct = () => {
   });
 
   const categories = [
-    "Smart Watch", "TV", "Shoes", "Mobile Phones", 
+    "Smart Watch", "TV", "Shoes",  
     "Headphones", "Fashion", "Laptop", "Gaming Accessories", 
-    "Camera", "Electronics", "Home Appliances", "Books"
+    "Camera", "Electronics", "Home Appliances"
   ];
 
   const handleSubmit = async (e: React.FormEvent) => {

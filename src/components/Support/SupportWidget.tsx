@@ -1,139 +1,227 @@
-import { useState } from "react";
-import { MessageCircle, X, Send, User } from "lucide-react";
-import { motion, AnimatePresence } from "motion/react";
+import { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+import { MessageSquare, X, Send, Headset } from 'lucide-react';
 import { cn } from "../../lib/utils";
-import Button from "../Button";
+
+interface Message {
+  id: string;
+  text: string;
+  sender: 'user' | 'agent';
+  timestamp: Date;
+}
+
+interface Agent {
+  id: string;
+  name: string;
+  avatar: string;
+  status: 'online' | 'offline';
+  specialty: string;
+}
+
+const agents: Agent[] = [
+  { id: 'rahim', name: 'Support Agent Rahim', avatar: 'https://i.pravatar.cc/150?u=rahim', status: 'online', specialty: 'Technical Support' },
+  { id: 'karim', name: 'Support Agent Karim', avatar: 'https://i.pravatar.cc/150?u=karim', status: 'online', specialty: 'Order & Billing' },
+];
 
 const SupportWidget = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [activeAgent, setActiveAgent] = useState<'rahim' | 'karim' | null>(null);
-  const [message, setMessage] = useState("");
-  const [messages, setMessages] = useState<{ role: 'user' | 'agent', text: string }[]>([]);
+  const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [inputValue, setInputValue] = useState('');
+  const scrollRef = useRef<HTMLDivElement>(null);
 
-  const agents = {
-    rahim: { name: "Rahim", status: "Online", avatar: "R" },
-    karim: { name: "Karim", status: "Away", avatar: "K" },
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [messages]);
+
+  const quickReplies = [
+    "Where is my order?",
+    "Return Policy",
+    "Payment Issues",
+    "Report a Problem"
+  ];
+
+  const handleQuickReply = (text: string) => {
+    if (text === "Report a Problem") {
+      const newMessage: Message = {
+        id: Date.now().toString(),
+        text: "I want to report a problem / open a ticket.",
+        sender: 'user',
+        timestamp: new Date(),
+      };
+      setMessages([...messages, newMessage]);
+      setTimeout(() => {
+        const agentReply: Message = {
+          id: (Date.now() + 1).toString(),
+          text: `Sure, I've opened a support ticket for you. Ticket ID: #TK-${Math.floor(1000 + Math.random() * 9000)}. Our team will get back to you within 24 hours.`,
+          sender: 'agent',
+          timestamp: new Date(),
+        };
+        setMessages(prev => [...prev, agentReply]);
+      }, 1000);
+      return;
+    }
+
+    setInputValue(text);
   };
 
-  const handleSendMessage = () => {
-    if (!message.trim()) return;
-    setMessages(prev => [...prev, { role: 'user', text: message }]);
-    setMessage("");
-    
-    // Auto reply
+  const handleSendMessage = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!inputValue.trim()) return;
+
+    const newMessage: Message = {
+      id: Date.now().toString(),
+      text: inputValue,
+      sender: 'user',
+      timestamp: new Date(),
+    };
+
+    setMessages([...messages, newMessage]);
+    setInputValue('');
+
+    // Simulate Agent Reply
     setTimeout(() => {
-      setMessages(prev => [...prev, { 
-        role: 'agent', 
-        text: `Hello! ${activeAgent ? agents[activeAgent].name : "Agent"} here. How can I help you today?` 
-      }]);
+      const agentReply: Message = {
+        id: (Date.now() + 1).toString(),
+        text: `Hello! I'm ${selectedAgent?.name}. How can I assist you today regarding ${selectedAgent?.specialty}?`,
+        sender: 'agent',
+        timestamp: new Date(),
+      };
+      setMessages(prev => [...prev, agentReply]);
     }, 1000);
   };
 
   return (
-    <div className="fixed bottom-8 right-8 z-[100]">
-      {/* Floating Button */}
-      <button 
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-14 h-14 bg-orange-500 rounded-full flex items-center justify-center shadow-2xl hover:scale-110 active:scale-95 transition-all duration-300 group"
-      >
-        {isOpen ? <X className="text-black" /> : <MessageCircle className="text-black" />}
-        {!isOpen && (
-          <span className="absolute -top-1 -right-1 bg-green-500 w-4 h-4 rounded-full border-4 border-[#050505]" />
-        )}
-      </button>
-
-      {/* Chat Window */}
+    <div className="fixed bottom-6 right-6 z-[100]">
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0, y: 20, scale: 0.9 }}
+            initial={{ opacity: 0, y: 20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 20, scale: 0.9 }}
-            className="absolute bottom-16 right-0 w-[350px] bg-[#0a0a0a] border border-white/10 rounded-3xl shadow-2xl overflow-hidden flex flex-col"
+            exit={{ opacity: 0, y: 20, scale: 0.95 }}
+            className="mb-4 w-80 md:w-96 h-[550px] bg-black/40 backdrop-blur-3xl rounded-3xl shadow-2xl border border-white/10 flex flex-col overflow-hidden"
           >
             {/* Header */}
-            <div className="bg-orange-500 p-6">
-              <h3 className="text-black font-bold text-lg">Support Center</h3>
-              <p className="text-black/60 text-xs uppercase tracking-widest font-medium">I zone Live Help</p>
-            </div>
-
-            {/* Agent Selection */}
-            {!activeAgent ? (
-              <div className="p-6 space-y-4">
-                <p className="text-sm font-medium text-white/70">Select an agent to start chatting:</p>
-                <div className="space-y-3">
-                  {(Object.keys(agents) as ('rahim' | 'karim')[]).map((key) => (
-                    <button 
-                      key={key}
-                      onClick={() => setActiveAgent(key)}
-                      className="w-full flex items-center justify-between p-4 bg-white/5 hover:bg-white/10 rounded-2xl border border-white/5 transition-all"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-orange-500/20 rounded-full flex items-center justify-center text-orange-500 font-bold border border-orange-500/30">
-                          {agents[key].avatar}
-                        </div>
-                        <div className="text-left">
-                          <p className="text-sm font-bold">Support Agent {agents[key].name}</p>
-                          <p className={cn("text-[10px] uppercase font-bold", agents[key].status === 'Online' ? 'text-green-500' : 'text-white/40')}>
-                            ● {agents[key].status}
-                          </p>
-                        </div>
-                      </div>
-                      <Button variant="ghost" size="sm">Chat</Button>
-                    </button>
-                  ))}
+            <div className="p-5 bg-gradient-to-r from-orange-500 to-orange-600 text-black flex justify-between items-center">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-black/10 rounded-full">
+                  <Headset size={20} />
+                </div>
+                <div>
+                  <h3 className="font-bold text-sm">I zone Support</h3>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-1.5 h-1.5 bg-black/30 rounded-full animate-pulse" />
+                    <p className="text-[10px] uppercase font-black tracking-widest text-black/50">Online Now</p>
+                  </div>
                 </div>
               </div>
-            ) : (
-              // Chat Interface
-              <>
-                <div className="flex-1 h-[300px] overflow-y-auto p-4 space-y-4">
-                  {messages.length === 0 ? (
-                    <div className="text-center py-10 space-y-2 opacity-30 px-6">
-                      <User className="w-12 h-12 mx-auto stroke-[1]" />
-                      <p className="text-sm italic">Starting chat with Agent {agents[activeAgent].name}...</p>
-                    </div>
-                  ) : (
-                    messages.map((msg, i) => (
-                      <div 
-                        key={i} 
-                        className={cn(
-                          "max-w-[80%] rounded-2xl p-3 text-sm",
-                          msg.role === 'user' ? "bg-orange-500 text-black ml-auto rounded-tr-none" : "bg-white/10 text-white rounded-tl-none"
-                        )}
-                      >
-                        {msg.text}
-                      </div>
-                    ))
-                  )}
+              <button 
+                onClick={() => { setIsOpen(false); setSelectedAgent(null); }}
+                className="hover:bg-black/10 p-1 rounded-full transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Content */}
+            {!selectedAgent ? (
+              <div className="flex-1 p-6 overflow-y-auto space-y-4 bg-gradient-to-b from-transparent to-black/20">
+                <div className="text-center mb-6 space-y-2">
+                   <h4 className="text-xs font-black text-orange-500 uppercase tracking-[0.2em]">Select an Agent</h4>
+                   <p className="text-[10px] text-white/30 italic">Speak with Rahim or Karim for instant help</p>
                 </div>
-                <div className="p-4 border-t border-white/10 flex gap-2">
-                  <input 
-                    type="text" 
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-                    placeholder="Type a message..."
-                    className="flex-1 bg-white/5 border border-white/5 rounded-full px-4 text-sm focus:outline-none focus:border-orange-500 transition-colors"
+                {agents.map((agent) => (
+                  <button
+                    key={agent.id}
+                    onClick={() => setSelectedAgent(agent)}
+                    className="w-full p-4 rounded-2xl border border-white/5 bg-white/5 hover:border-orange-500/50 hover:bg-white/10 transition-all text-left flex items-center gap-4 group"
+                  >
+                    <div className="relative">
+                      <img src={agent.avatar} alt={agent.name} className="w-12 h-12 rounded-full border-2 border-white/10 shadow-sm" />
+                      <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-black rounded-full shadow-[0_0_8px_rgba(34,197,94,0.5)]"></div>
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-bold text-sm text-white group-hover:text-orange-500 transition-colors">{agent.name}</p>
+                      <p className="text-[10px] text-white/40 font-medium uppercase tracking-widest">{agent.specialty}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <>
+                <div className="bg-white/5 p-2 px-4 flex items-center justify-between border-b border-white/5">
+                  <p className="text-[10px] text-white/40 font-bold uppercase tracking-widest">Active: {selectedAgent.name}</p>
+                  <button onClick={() => setSelectedAgent(null)} className="text-[10px] text-orange-500 font-bold hover:underline">CHANGE AGENT</button>
+                </div>
+                <div ref={scrollRef} className="flex-1 p-4 overflow-y-auto space-y-4 scroll-smooth bg-gradient-to-b from-transparent to-black/20">
+                  {messages.length === 0 && (
+                    <div className="space-y-6">
+                      <div className="text-center py-10 opacity-20 space-y-4">
+                        <MessageSquare className="mx-auto" size={40} />
+                        <p className="text-xs italic leading-relaxed px-10">Hello! I'm here to help you with your shopping experience at I zone.</p>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                         {quickReplies.map((reply, i) => (
+                           <button 
+                             key={i} 
+                             onClick={() => handleQuickReply(reply)}
+                             className="p-2 border border-white/5 bg-white/5 rounded-xl text-[10px] font-bold text-white/60 hover:border-orange-500/50 hover:text-white transition-all text-center"
+                           >
+                             {reply}
+                           </button>
+                         ))}
+                      </div>
+                    </div>
+                  )}
+                  {messages.map((msg) => (
+                    <div key={msg.id} className={cn("flex", msg.sender === 'user' ? 'justify-end' : 'justify-start')}>
+                      <div className={cn(
+                        "max-w-[85%] p-3 px-4 rounded-2xl text-sm leading-relaxed",
+                        msg.sender === 'user' 
+                          ? 'bg-orange-500 text-black rounded-tr-none shadow-lg shadow-orange-500/20 font-medium' 
+                          : 'bg-white/10 text-white rounded-tl-none border border-white/5 backdrop-blur-md'
+                      )}>
+                        {msg.text}
+                        <p className={cn("text-[9px] mt-1 opacity-50 font-bold", msg.sender === 'user' ? 'text-black' : 'text-white/40')}>
+                          {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <form onSubmit={handleSendMessage} className="p-4 bg-black/40 backdrop-blur-xl border-t border-white/10 flex gap-2">
+                  <input
+                    type="text"
+                    value={inputValue}
+                    onChange={(e) => setInputValue(e.target.value)}
+                    placeholder="Ask anything..."
+                    className="flex-1 bg-white/5 border border-white/10 rounded-full px-5 py-2.5 text-sm text-white focus:ring-1 focus:ring-orange-500 transition-all outline-none"
                   />
                   <button 
-                    onClick={handleSendMessage}
-                    className="p-2 bg-orange-500 rounded-full text-black hover:scale-110 active:scale-95 transition-transform"
+                    type="submit"
+                    className="bg-orange-500 text-black p-2.5 rounded-full hover:scale-105 active:scale-95 transition-all shadow-lg shadow-orange-500/20"
                   >
-                    <Send className="w-4 h-4" />
+                    <Send size={18} />
                   </button>
-                </div>
-                <button 
-                  onClick={() => setActiveAgent(null)}
-                  className="text-center pb-4 text-[10px] text-white/30 uppercase tracking-widest hover:text-white transition-colors"
-                >
-                  Back to Agents
-                </button>
+                </form>
               </>
             )}
           </motion.div>
         )}
       </AnimatePresence>
+
+      <motion.button
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.9 }}
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-16 h-16 bg-gradient-to-tr from-orange-500 to-orange-600 text-black rounded-full shadow-[0_0_40px_rgba(249,115,22,0.3)] flex items-center justify-center relative group"
+        id="support-toggle"
+      >
+        <div className="absolute inset-0 bg-white/40 blur-xl scale-0 group-hover:scale-110 transition-transform duration-500 rounded-full opacity-0 group-hover:opacity-100"></div>
+        {isOpen ? <X size={28} className="relative z-10" /> : <MessageSquare size={28} className="relative z-10" />}
+      </motion.button>
     </div>
   );
 };

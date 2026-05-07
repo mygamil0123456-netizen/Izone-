@@ -9,17 +9,45 @@ import { motion } from "motion/react";
 
 const SignupPage = () => {
   const [fullName, setFullName] = useState("");
+  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [isVerified, setIsVerified] = useState(false);
+  const [hasLocation, setHasLocation] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+
+  const handleVerify = () => {
+    setIsVerifying(true);
+    setTimeout(() => {
+      setIsVerifying(false);
+      setIsVerified(true);
+    }, 1500);
+  };
+
+  const requestLocation = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(() => {
+        setHasLocation(true);
+      }, (error) => {
+        alert("Please enable location permissions for a better experience.");
+      });
+    }
+  };
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     if (password !== confirmPassword) {
       return setError("Passwords do not match");
+    }
+    if (!isVerified) {
+      return setError("Please complete the robot verification");
+    }
+    if (!hasLocation) {
+       return setError("Location permission is required for delivery optimization");
     }
     
     setLoading(true);
@@ -63,7 +91,19 @@ const SignupPage = () => {
         )}
 
         <form onSubmit={handleSignup} className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="md:col-span-2 relative group">
+          <div className="relative group">
+            <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/20 group-focus-within:text-orange-500 transition-colors" />
+            <input 
+              type="text" 
+              required
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="Username"
+              className="w-full bg-white/5 border border-white/5 rounded-2xl py-4 pl-12 pr-4 text-sm outline-none focus:border-orange-500 transition-colors"
+            />
+          </div>
+
+          <div className="relative group">
             <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/20 group-focus-within:text-orange-500 transition-colors" />
             <input 
               type="text" 
@@ -82,7 +122,7 @@ const SignupPage = () => {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="Email Address"
+              placeholder="Email or Phone Number"
               className="w-full bg-white/5 border border-white/5 rounded-2xl py-4 pl-12 pr-4 text-sm outline-none focus:border-orange-500 transition-colors"
             />
           </div>
@@ -109,6 +149,33 @@ const SignupPage = () => {
               placeholder="Confirm"
               className="w-full bg-white/5 border border-white/5 rounded-2xl py-4 pl-12 pr-4 text-sm outline-none focus:border-orange-500 transition-colors"
             />
+          </div>
+
+          <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <button 
+              type="button" 
+              onClick={handleVerify}
+              disabled={isVerified || isVerifying}
+              className={`flex items-center justify-between p-4 rounded-2xl border transition-all ${isVerified ? 'bg-green-500/10 border-green-500/20 text-green-500' : 'bg-white/5 border-white/5 text-white/40 hover:border-orange-500/50'}`}
+            >
+              <span className="text-xs font-bold uppercase tracking-widest">
+                {isVerifying ? "Verifying..." : isVerified ? "Robot Verified" : "Robot Verification"}
+              </span>
+              <div className={`w-5 h-5 rounded-md border flex items-center justify-center ${isVerified ? 'bg-green-500 border-green-500' : 'border-white/20'}`}>
+                {isVerified && <div className="w-2 h-4 border-r-2 border-b-2 border-black rotate-45 mb-1" />}
+              </div>
+            </button>
+
+            <button 
+              type="button" 
+              onClick={requestLocation}
+              className={`flex items-center justify-between p-4 rounded-2xl border transition-all ${hasLocation ? 'bg-orange-500 text-black border-orange-500' : 'bg-white/5 border-white/5 text-white/40 hover:border-orange-500/50'}`}
+            >
+              <span className="text-xs font-bold uppercase tracking-widest">
+                {hasLocation ? "Location Access OK" : "Allow Location Access"}
+              </span>
+              <MapPin className={`w-5 h-5 ${hasLocation ? 'text-black' : 'text-white/20'}`} />
+            </button>
           </div>
 
           <div className="md:col-span-2 space-y-4">

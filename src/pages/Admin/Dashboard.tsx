@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useSelector } from "react-redux";
 import { Navigate, Routes, Route, Link } from "react-router-dom";
 import { 
-  History, Package, Users, BarChart3, Bell, 
+  History, Package, Users as UsersIcon, BarChart3, Bell, 
   Settings, LayoutDashboard, Plus, Search, Filter 
 } from "lucide-react";
 import { RootState } from "../../store/store";
@@ -10,6 +10,9 @@ import Button from "../../components/Button";
 import { cn } from "../../lib/utils";
 
 import AddProduct from "./AddProduct";
+import Orders from "./Orders";
+import Users from "./Users";
+import Tickets from "./Tickets";
 
 const SidebarLink = ({ to, icon: Icon, label, active }: any) => (
   <Link 
@@ -42,7 +45,8 @@ const AdminDashboard = () => {
           <SidebarLink to="/admin" icon={LayoutDashboard} label="Overview" />
           <SidebarLink to="/admin/products" icon={Package} label="Products" />
           <SidebarLink to="/admin/orders" icon={History} label="Orders" />
-          <SidebarLink to="/admin/users" icon={Users} label="Users" />
+          <SidebarLink to="/admin/users" icon={UsersIcon} label="Users" />
+          <SidebarLink to="/admin/agents" icon={UsersIcon} label="Agents" />
           <SidebarLink to="/admin/analytics" icon={BarChart3} label="Analytics" />
           <SidebarLink to="/admin/notifications" icon={Bell} label="Broadcast" />
         </nav>
@@ -55,8 +59,13 @@ const AdminDashboard = () => {
       <main className="flex-1 p-10 space-y-10 overflow-y-auto max-h-[85vh] no-scrollbar">
         <Routes>
            <Route path="/" element={<Overview />} />
-           <Route path="/products" element={<Overview />} /> {/* Placeholders */}
+           <Route path="/products" element={<Overview />} /> 
            <Route path="/add-product" element={<AddProduct />} />
+           <Route path="/orders" element={<Orders />} />
+           <Route path="/users" element={<Users />} />
+           <Route path="/agents" element={<Tickets />} /> {/* Tickets represent agent interactions */}
+           <Route path="/analytics" element={<div className="text-4xl font-black italic uppercase">Analytics & Sales Reports</div>} />
+           <Route path="/notifications" element={<Tickets />} />
         </Routes>
       </main>
     </div>
@@ -84,7 +93,7 @@ const Overview = () => (
        {[
          { label: "Total Revenue", val: "৳1,450,000", delta: "+12.5%", icon: <BarChart3 /> },
          { label: "Total Orders", val: "1,240", delta: "+8.2%", icon: <History /> },
-         { label: "Active Users", val: "4,820", delta: "+15.3%", icon: <Users /> },
+         { label: "Active Users", val: "4,820", delta: "+15.3%", icon: <UsersIcon /> },
          { label: "Avg. Sale", val: "৳12,500", delta: "-2.1%", icon: <LayoutDashboard /> },
        ].map((stat, i) => (
          <div key={i} className="bg-white/5 border border-white/5 rounded-3xl p-8 space-y-4 hover:bg-white/[0.08] transition-all">

@@ -8,11 +8,13 @@ import { toggleCart } from "../../store/slices/cartSlice";
 import { auth } from "../../services/firebase";
 import { signOut } from "firebase/auth";
 import { cn } from "../../lib/utils";
+import SearchOverlay from "../SearchOverlay";
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -35,13 +37,11 @@ const Navbar = () => {
   };
 
   const categories = [
-    { name: "Smart Watch", path: "/category/smart-watch" },
+    { name: "Mobiles", path: "/category/mobile-phones" },
+    { name: "Watches", path: "/category/smart-watch" },
     { name: "TV", path: "/category/tv" },
-    { name: "Mobile", path: "/category/mobile" },
-    { name: "Laptops", path: "/category/laptop" },
-    { name: "Fashion", path: "/category/fashion" },
     { name: "Books", path: "/category/books" },
-    { name: "Accessories", path: "/category/accessories" },
+    { name: "Pro Cam", path: "/category/camera" },
   ];
 
   return (
@@ -68,7 +68,10 @@ const Navbar = () => {
 
         {/* Action Icons */}
         <div className="flex items-center gap-5">
-          <button className="p-2 hover:bg-white/10 rounded-full transition-colors hidden md:block">
+          <button 
+            onClick={() => setIsSearchOpen(true)}
+            className="p-2 hover:bg-white/10 rounded-full transition-colors hidden md:block"
+          >
             <Search className="w-5 h-5 text-white/70" />
           </button>
           
@@ -152,13 +155,17 @@ const Navbar = () => {
                   <User className="w-5 h-5" /> Profile
                 </Link>
                 <div className="flex gap-4">
-                  <Search className="w-5 h-5" />
+                  <button onClick={() => { setIsMobileMenuOpen(false); setIsSearchOpen(true); }}>
+                    <Search className="w-5 h-5" />
+                  </button>
                 </div>
               </div>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
+
+      <SearchOverlay isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
     </nav>
   );
 };

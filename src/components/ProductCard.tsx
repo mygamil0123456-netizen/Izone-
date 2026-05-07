@@ -14,6 +14,7 @@ export interface ProductProps {
   category: string;
   rating: number;
   stockStatus: "In Stock" | "Out of Stock";
+  specs?: Record<string, string>;
 }
 
 const ProductCard = ({ product }: { product: ProductProps }) => {
@@ -86,6 +87,12 @@ const ProductCard = ({ product }: { product: ProductProps }) => {
           <h3 className="font-bold text-lg leading-tight group-hover:text-orange-500 transition-colors line-clamp-1">
             {product.name}
           </h3>
+          {product.specs && product.category === 'mobile-phones' && (
+            <div className="flex flex-wrap gap-x-2 gap-y-0.5 mt-1">
+              {product.specs.RAM && <span className="text-[10px] font-bold uppercase tracking-widest text-white/40">RAM: {product.specs.RAM}</span>}
+              {product.specs.ROM && <span className="text-[10px] font-bold uppercase tracking-widest text-white/40">ROM: {product.specs.ROM}</span>}
+            </div>
+          )}
         </Link>
         <div className="flex items-baseline gap-3 pt-2">
           {product.discountPrice ? (

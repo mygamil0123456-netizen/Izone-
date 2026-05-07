@@ -1,0 +1,101 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // -------------------------------------------------------------------------
+    // GLOBAL HELPERS
+    // -------------------------------------------------------------------------
+    function isSignedIn() { return request.auth != null; }
+    function isVerified() { return isSignedIn() && request.auth.token.email_verified == true; }
+    function isAdmin() { return isSignedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid)); }
+    function isOwner(uid) { return isSignedIn() && request.auth.uid == uid; }
+    function isValidId(id) { return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); }
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+
+    // -------------------------------------------------------------------------
+    // SECURITY CATCH-ALL
+    // -------------------------------------------------------------------------
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // -------------------------------------------------------------------------
+    // USERS COLLECTION
+    // -------------------------------------------------------------------------
+    function isValidUser(data) {
+      return data.keys().hasAll(['uid', 'email', 'role']) &&
+             data.uid == request.auth.uid &&
+             data.email is string && data.email.size() <= 200 &&
+             data.role in ['customer', 'admin', 'agent'] &&
+             (!('fullName' in data) || (data.fullName is string && data.fullName.size() <= 100));
+    }
+
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isVerified() && isValidUser(incoming());
+      allow update: if isOwner(userId) && 
+                      isValidUser(incoming()) && 
+                      incoming().role == existing().role; // Users can't change their own role
+    }
+
+    // -------------------------------------------------------------------------
+    // PRODUCTS COLLECTION
+    // -------------------------------------------------------------------------
+    function isValidProduct(data) {
+      return data.keys().hasAll(['name', 'price', 'category', 'stock']) &&
+             data.name is string && data.name.size() <= 200 &&
+             data.price is number && data.price >= 0 &&
+             data.category is string &&
+             data.stock is int && data.stock >= 0;
+    }
+
+    match /products/{productId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+      
+      // Subcollection: Reviews
+      match /reviews/{reviewId} {
+        allow read: if true;
+        allow create: if isVerified() && 
+                        incoming().userId == request.auth.uid &&
+                        incoming().productId == productId;
+        allow delete: if isOwner(existing().userId) || isAdmin();
+      }
+    }
+
+    // -------------------------------------------------------------------------
+    // ORDERS COLLECTION
+    // -------------------------------------------------------------------------
+    function isValidOrder(data) {
+      return data.keys().hasAll(['userId', 'items', 'totalAmount', 'status']) &&
+             data.userId == request.auth.uid &&
+             data.items is list && data.items.size() <= 50 &&
+             data.totalAmount is number &&
+             data.status == 'pending';
+    }
+
+    match /orders/{orderId} {
+      allow read: if isOwner(existing().userId) || isAdmin();
+      allow create: if isVerified() && isValidOrder(incoming());
+      allow update: if isAdmin(); // Only admins can update status/payment
+    }
+
+    // -------------------------------------------------------------------------
+    // SUPPORT TICKETS
+    // -------------------------------------------------------------------------
+    match /support_tickets/{ticketId} {
+      allow read: if isOwner(existing().userId) || isAdmin();
+      allow create: if isVerified() && incoming().userId == request.auth.uid;
+      allow update: if isOwner(existing().userId) || isAdmin();
+    }
+
+    // -------------------------------------------------------------------------
+    // ADMINS (IDENTITY LIST)
+    // -------------------------------------------------------------------------
+    match /admins/{adminId} {
+      allow read: if isSignedIn();
+      allow write: if false; // Managed via GCP console
+    }
+  }
+}

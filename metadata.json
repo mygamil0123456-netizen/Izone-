@@ -1,0 +1,6 @@
+{
+  "name": "I zone",
+  "description": "A premium, fast, and secure e-commerce platform for gadgets, fashion, and electronics with real-time support and advanced admin controls.",
+  "requestFramePermissions": ["geolocation"],
+  "majorCapabilities": []
+}
